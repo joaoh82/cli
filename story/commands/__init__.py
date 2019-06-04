@@ -13,4 +13,5 @@ __all__ = [
     'update',
     'deploy',
     'logout'
+    'containerconfig',
 ]

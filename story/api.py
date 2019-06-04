@@ -312,3 +312,107 @@ class Apps:
                 'appPatch': {'deleted': True},
             },
         )
+
+
+class ContainerConfig:
+
+    @staticmethod
+    def list():
+        res = graphql(
+            """
+            query {
+              allOwnerContainerconfigs {
+                nodes {
+                  name
+                }
+              }
+            }
+            """
+        )
+        return res['data']['allOwnerContainerconfigs']['nodes']
+
+    @staticmethod
+    def get(name: str):
+        res = graphql(
+            """
+            query ($ownerUuid: UUID!, $name: String!) {
+              ownerContainerconfigByOwnerUuidAndName (ownerUuid: $ownerUuid,
+                                                   name: $name) {
+                containerconfig
+              }
+            }
+            """,
+            name=name,
+            ownerUuid=cli.get_user_id()
+        )
+        config = res['data']['ownerContainerconfigByOwnerUuidAndName']
+        if config is None:
+            click.echo()
+            click.echo(click.style(
+                f'The docker config "{name}" doesn\'t seem to exist.\n'
+                f'Are you sure you have access to it?',
+                fg='red'), err=True)
+            sys.exit(1)
+        return config['containerconfig']
+
+    @staticmethod
+    def create(name: str, containerconfig: dict):
+        graphql(
+            """
+            mutation ($data: CreateOwnerContainerconfigInput!) {
+              createOwnerContainerconfig(input: $data) {
+                ownerContainerconfig {
+                  uuid
+                }
+              }
+            }
+            """,
+            data={
+                'ownerContainerconfig': {
+                    'ownerUuid': cli.get_user_id(),
+                    'name': name,
+                    'containerconfig': containerconfig
+                }
+            }
+        )
+
+    @staticmethod
+    def update(name: str, containerconfig: dict):
+        graphql(
+            """
+            mutation (
+                $data: UpdateOwnerContainerconfigByOwnerUuidAndNameInput!) {
+              updateOwnerContainerconfigByOwnerUuidAndName(input: $data) {
+                ownerContainerconfig {
+                  uuid
+                }
+              }
+            }
+            """,
+            data={
+                'ownerUuid': cli.get_user_id(),
+                'name': name,
+                'ownerContainerconfigPatch': {
+                    'containerconfig': containerconfig
+                }
+            }
+        )
+
+    @staticmethod
+    def delete(name: str):
+        graphql(
+            """
+            mutation (
+                $data: DeleteOwnerContainerconfigByOwnerUuidAndNameInput!) {
+              deleteOwnerContainerconfigByOwnerUuidAndName(input: $data) {
+                ownerContainerconfig {
+                  uuid
+                }
+              }
+            }
+            """,
+            data={
+                'ownerUuid': cli.get_user_id(),
+                'name': name,
+            }
+        )
