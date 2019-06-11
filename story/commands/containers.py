@@ -29,7 +29,7 @@ def load_json(path):
 
 
 @cli.cli.group()
-def container():
+def containers():
     """
     Manage the container configs used by the
     Storyscript platform for authorization
@@ -37,19 +37,19 @@ def container():
     pass
 
 
-@container.command(name='list')
+@containers.command(name='list')
 def list_command():
     """List all container configs that you have access to"""
     with spinner():
         res = api.ContainerConfig.list()
     if len(res) == 0:
         click.echo("No container configs found. Create a new one with")
-        click.echo(click.style('$ story container create', fg='magenta'))
+        click.echo(click.style('$ story containers create', fg='magenta'))
     for config in res:
         click.echo(config['name'])
 
 
-@container.command()
+@containers.command()
 @click.argument('name', nargs=1)
 def get(name):
     """Get a container config by name"""
@@ -58,7 +58,7 @@ def get(name):
     click.echo(json.dumps(res, indent=4))
 
 
-@container.command()
+@containers.command()
 @click.argument('name', nargs=1)
 @click.argument('path', nargs=1)
 @click.option(
@@ -75,7 +75,7 @@ def create(name, path, team):
     )
 
 
-@container.command()
+@containers.command()
 @click.argument('name', nargs=1)
 @click.argument('path', nargs=1)
 def update(name, path):
@@ -89,7 +89,7 @@ def update(name, path):
     )
 
 
-@container.command()
+@containers.command()
 @click.argument('name', nargs=1)
 def delete(name):
     """Delete a container config by name"""
