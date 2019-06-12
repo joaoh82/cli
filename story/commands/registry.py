@@ -40,7 +40,7 @@ def registry():
 def list_command():
     """List all registry configs that you have access to"""
     with spinner():
-        res = api.ContainerConfig.list()
+        res = api.Registry.list()
     if len(res) == 0:
         click.echo("No registry configs found. Create a new one with")
         click.echo(click.style('$ story registry create', fg='magenta'))
@@ -56,7 +56,7 @@ def list_command():
 def get(name):
     """Get a registry config"""
     with spinner():
-        res = api.ContainerConfig.get(name)
+        res = api.Registry.get(name)
     click.echo(json.dumps(res, indent=4))
 
 
@@ -76,7 +76,7 @@ def create(name, file, team):
     """Create a new registry config"""
     config = load_json(file)
     with spinner():
-        api.ContainerConfig.create(name, config)
+        api.Registry.create(name, config)
     click.echo(click.style('\b' + emoji.emojize(':heavy_check_mark:'),
                            fg='green') + f' Created registry config - {name}')
 
@@ -94,7 +94,7 @@ def update(name, file):
     """Update a registry config"""
     config = load_json(file)
     with spinner():
-        api.ContainerConfig.update(name, config)
+        api.Registry.update(name, config)
     click.echo(click.style('\b' + emoji.emojize(':heavy_check_mark:'),
                            fg='green') + f' Updated registry config - {name}')
 
@@ -107,6 +107,6 @@ def update(name, file):
 def delete(name):
     """Delete a registry config"""
     with spinner():
-        api.ContainerConfig.delete(name)
+        api.Registry.delete(name)
     click.echo(click.style('\b' + emoji.emojize(':heavy_check_mark:'),
                            fg='green') + f' Deleted registry config - {name}')
