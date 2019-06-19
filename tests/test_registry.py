@@ -10,9 +10,9 @@ def write_config(filename, config):
         f.write(config)
 
 
-@pytest.mark.parametrize("data", [
+@pytest.mark.parametrize('data', [
     {
-        "config": """{
+        'config': """{
             "auths": {
                 "https://index.docker.io/v1/": {
                     "auth": "b64_username_password"
@@ -20,11 +20,11 @@ def write_config(filename, config):
             }
         }
         """,
-        "valid": True
+        'valid': True
     },
     {
-        "config": "not json",
-        "valid": False
+        'config': 'not json',
+        'valid': False
     }
 ])
 def test_registry(cli, data):

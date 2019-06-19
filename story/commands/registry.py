@@ -4,11 +4,13 @@ import os
 import sys
 
 from blindspin import spinner
+
 import click
+
 import emoji
 
-from .. import cli
 from .. import api
+from .. import cli
 
 
 def load_json(path):
@@ -17,12 +19,12 @@ def load_json(path):
             config = json.load(f)
     except (FileNotFoundError, IsADirectoryError):
         click.echo(click.style(
-            f"The file {path} does not exist",
+            f'The file {path} does not exist',
             fg='red'), err=True)
         sys.exit(1)
     except json.decoder.JSONDecodeError:
         click.echo(click.style(
-            f"The file {path} is not valid JSON",
+            f'The file {path} is not valid JSON',
             fg='red'), err=True)
         sys.exit(1)
     return config
@@ -42,7 +44,7 @@ def list_command():
     with spinner():
         res = api.Registry.list()
     if len(res) == 0:
-        click.echo("No registry configs found. Create a new one with")
+        click.echo('No registry configs found. Create a new one with')
         click.echo(click.style('$ story registry create', fg='magenta'))
     for config in res:
         click.echo(config['name'])
