@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import base64
 import json
 import os
 import sys
@@ -11,6 +12,9 @@ import emoji
 
 from .. import api
 from .. import cli
+
+
+DOCKER_HUB_REGISTRY_URL = 'https://index.docker.io/v1/'
 
 
 def load_json(path):
@@ -28,6 +32,63 @@ def load_json(path):
             fg='red'), err=True)
         sys.exit(1)
     return config
+
+
+def generate_config(registry_url, username, password):
+    return {
+        'auths': {
+            registry_url: {
+                'auth': base64.b64encode(
+                    f'{username}:{password}'.encode()
+                ).decode()
+            }
+        }
+    }
+
+
+def generate_docker_login_config():
+    registry_url = click.prompt('Registry URL', type=str,
+                                default=DOCKER_HUB_REGISTRY_URL)
+    username = click.prompt('Username', type=str)
+    password = click.prompt('Password', type=str, hide_input=True)
+    return generate_config(registry_url, username, password)
+
+
+def generate_gcr_config():
+    hostname = click.prompt('Hostname', type=click.Choice([
+        'gcr.io', 'us.gcr.io', 'eu.gcr.io', 'asia.gcr.io'
+    ]))
+    password = click.prompt('Service Account JSON key file (on a single line)', type=str)
+    return generate_config(f'https://{hostname}', '_json_key', password)
+
+
+def generate_ecr_config():
+    registry_url = click.prompt('Registry URL '
+                                '(https://aws_account_id.dkr.ecr'
+                                '.region.amazonaws.com)', type=str)
+    authorization_token = click.prompt('ECR authorization token '
+                                       '($ aws get-authorization-token)',
+                                       type=str)
+    return generate_config(registry_url, 'AWS', authorization_token)
+
+
+def get_config_interactive():
+    click.echo("Use type 'docker_login' for "
+               "registries that authenticate via `$ docker login`")
+    click.echo()
+    click.echo("Defaults are set to Docker Hub")
+    click.echo()
+    registry_type = click.prompt(
+        'Registry Type',
+        type=click.Choice(['docker_login', 'gcr', 'ecr']),
+        default='docker_login'
+    )
+    if registry_type == 'docker_login':
+        return generate_docker_login_config()
+    elif registry_type == 'gcr':
+        return generate_gcr_config()
+    elif registry_type == 'ecr':
+        return generate_ecr_config()
 
 
 @cli.cli.group()
@@ -68,17 +129,30 @@ def get(name):
     required=True
 )
 @click.option(
-    '-f', '--file', type=str, help='Path of the registry config json file',
-    required=True
+    '-i', '--interactive', type=bool, is_flag=True, default=False,
+    help='Generate registry config using the story CLI'
+)
+@click.option(
+    '-f', '--file', type=str, help='Path of the registry config json file'
 )
 @click.option(
     '--team', type=str, help='Team name that owns this new registry config'
 )
-def create(name, file, team):
+def create(name, interactive, file, team):
     """Create a new registry config"""
-    config = load_json(file)
+
+    if file:
+        config = load_json(file)
+    elif interactive:
+        config = get_config_interactive()
+    else:
+        click.echo("Error: Either -i / --interactive or "
+                   "-f / --file must be specified")
+        sys.exit(1)
+
     with spinner():
         api.Registry.create(name, config)
+    click.echo()
     click.echo(click.style('\b' + emoji.emojize(':heavy_check_mark:'),
                            fg='green') + f' Created registry config - {name}')
 
@@ -89,14 +163,27 @@ def create(name, file, team):
     required=True
 )
 @click.option(
-    '-f', '--file', type=str, help='Path of the registry config json file',
-    required=True
+    '-i', '--interactive', type=bool, is_flag=True, default=False,
+    help='Generate registry config using the story CLI'
 )
-def update(name, file):
+@click.option(
+    '-f', '--file', type=str, help='Path of the registry config json file'
+)
+def update(name, interactive, file):
     """Update a registry config"""
-    config = load_json(file)
+
+    if file:
+        config = load_json(file)
+    elif interactive:
+        config = get_config_interactive()
+    else:
+        click.echo("Error: Either -i / --interactive or "
+                   "-f / --file must be specified")
+        sys.exit(1)
+
     with spinner():
         api.Registry.update(name, config)
+    click.echo()
     click.echo(click.style('\b' + emoji.emojize(':heavy_check_mark:'),
                            fg='green') + f' Updated registry config - {name}')
 
