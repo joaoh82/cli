@@ -58,7 +58,8 @@ def generate_gcr_config():
     hostname = click.prompt('Hostname', type=click.Choice([
         'gcr.io', 'us.gcr.io', 'eu.gcr.io', 'asia.gcr.io'
     ]))
-    password = click.prompt('Service Account JSON key file (on a single line)', type=str)
+    password = click.prompt('Service Account JSON key file (on a single line)',
+                            type=str)
     return generate_config(f'https://{hostname}', '_json_key', password)
 
 
@@ -74,9 +75,9 @@ def generate_ecr_config():
 
 def get_config_interactive():
     click.echo("Use type 'docker_login' for "
-               "registries that authenticate via `$ docker login`")
+               'registries that authenticate via `$ docker login`')
     click.echo()
-    click.echo("Defaults are set to Docker Hub")
+    click.echo('Defaults are set to Docker Hub')
     click.echo()
     registry_type = click.prompt(
         'Registry Type',
@@ -146,8 +147,8 @@ def create(name, interactive, file, team):
     elif interactive:
         config = get_config_interactive()
     else:
-        click.echo("Error: Either -i / --interactive or "
-                   "-f / --file must be specified")
+        click.echo('Error: Either -i / --interactive or '
+                   '-f / --file must be specified')
         sys.exit(1)
 
     with spinner():
@@ -177,8 +178,8 @@ def update(name, interactive, file):
     elif interactive:
         config = get_config_interactive()
     else:
-        click.echo("Error: Either -i / --interactive or "
-                   "-f / --file must be specified")
+        click.echo('Error: Either -i / --interactive or '
+                   '-f / --file must be specified')
         sys.exit(1)
 
     with spinner():
