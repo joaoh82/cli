@@ -63,16 +63,6 @@ def generate_gcr_config():
     return generate_config(f'https://{hostname}', '_json_key', password)
 
 
-def generate_ecr_config():
-    registry_url = click.prompt('Registry URL '
-                                '(https://aws_account_id.dkr.ecr'
-                                '.region.amazonaws.com)', type=str)
-    authorization_token = click.prompt('ECR authorization token '
-                                       '($ aws ecr get-authorization-token)',
-                                       type=str)
-    return generate_config(registry_url, 'AWS', authorization_token)
-
-
 def get_config_interactive():
     click.echo("Use type 'docker_login' for "
                'registries that authenticate via `$ docker login`')
@@ -81,15 +71,13 @@ def get_config_interactive():
     click.echo()
     registry_type = click.prompt(
         'Registry Type',
-        type=click.Choice(['docker_login', 'gcr', 'ecr']),
+        type=click.Choice(['docker_login', 'gcr']),
         default='docker_login'
     )
     if registry_type == 'docker_login':
         return generate_docker_login_config()
     elif registry_type == 'gcr':
         return generate_gcr_config()
-    elif registry_type == 'ecr':
-        return generate_ecr_config()
 
 
 @cli.cli.group()

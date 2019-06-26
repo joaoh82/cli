@@ -27,7 +27,7 @@ def test_registry_generate_config(config_data):
     'password': 'my_dockerhub_password'
 }, {
     'type': 'docker_login',
-    'url': 'quay.io/my_quay_username/my_repository',
+    'url': 'quay.io',
     'username': 'my_quay_username',
     'password': 'my_quay_password',
 }])
@@ -78,35 +78,6 @@ def test_registry_create_gcr(runner, patch, config_data):
         registry_url=f'https://{config_data["hostname"]}',
         username='_json_key',
         password=config_data['service_account_json_key']
-    )
-
-    Registry.create.assert_called_with(config_name, config)
-
-
-@mark.parametrize('config_data', [{
-    'type': 'ecr',
-    'url': 'https://aws_account_id.dkr.ecr.region.amazonaws.com',
-    'authorization_token': 'base64_authorizationtoken'
-}])
-def test_registry_create_ecr(runner, patch, config_data):
-
-    config_name = 'my_config'
-
-    patch.object(Registry, 'create')
-
-    runner.invoke(
-        registry.create,
-        args=[
-            '-n', config_name,
-            '-i'
-        ],
-        input='\n'.join(config_data.values())
-    )
-
-    config = registry.generate_config(
-        registry_url=config_data['url'],
-        username='AWS',
-        password=config_data['authorization_token']
     )
 
     Registry.create.assert_called_with(config_name, config)
