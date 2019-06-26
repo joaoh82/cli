@@ -68,7 +68,7 @@ def generate_ecr_config():
                                 '(https://aws_account_id.dkr.ecr'
                                 '.region.amazonaws.com)', type=str)
     authorization_token = click.prompt('ECR authorization token '
-                                       '($ aws get-authorization-token)',
+                                       '($ aws ecr get-authorization-token)',
                                        type=str)
     return generate_config(registry_url, 'AWS', authorization_token)
 
