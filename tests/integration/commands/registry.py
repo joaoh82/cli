@@ -37,13 +37,14 @@ def test_registry_create_dockerlogin(runner, patch, config_data):
 
     patch.object(Registry, 'create')
 
-    runner.invoke(
-        registry.create,
-        args=[
-            '-n', config_name,
-            '-i'
-        ],
-        input='\n'.join(config_data.values()))
+    with runner.runner.isolated_filesystem():
+        runner.run(
+            registry.create,
+            args=[
+                '-n', config_name,
+                '-i'
+            ],
+            stdin='\n'.join(config_data.values()))
 
     config = registry.generate_config(
         registry_url=config_data['url'] or registry.DOCKER_HUB_REGISTRY_URL,
@@ -65,14 +66,15 @@ def test_registry_create_gcr(runner, patch, config_data):
 
     patch.object(Registry, 'create')
 
-    runner.invoke(
-        registry.create,
-        args=[
-            '-n', config_name,
-            '-i'
-        ],
-        input='\n'.join(config_data.values())
-    )
+    with runner.runner.isolated_filesystem():
+        runner.run(
+            registry.create,
+            args=[
+                '-n', config_name,
+                '-i'
+            ],
+            stdin='\n'.join(config_data.values())
+        )
 
     config = registry.generate_config(
         registry_url=f'https://{config_data["hostname"]}',
@@ -101,13 +103,14 @@ def test_registry_create_file(runner, patch, config_json):
     patch.object(registry, 'load_json', side_effect=registry.load_json)
     patch.object(Registry, 'create')
 
-    runner.invoke(
-        registry.create,
-        args=[
-            '-n', config_name,
-            '-f', config_path
-        ]
-    )
+    with runner.runner.isolated_filesystem():
+        runner.run(
+            registry.create,
+            args=[
+                '-n', config_name,
+                '-f', config_path
+            ]
+        )
 
     registry.load_json.assert_called_with(config_path)
     Registry.create.assert_called_with(config_name, config_json)
@@ -115,7 +118,8 @@ def test_registry_create_file(runner, patch, config_json):
 
 def test_registry_list(patch, runner):
     patch.object(Registry, 'list')
-    runner.invoke(registry.list_command)
+    with runner.runner.isolated_filesystem():
+        runner.run(registry.list_command)
     Registry.list.assert_called_with()
 
 
@@ -123,12 +127,13 @@ def test_registry_get(patch, runner):
 
     config_name = 'my_config'
 
-    patch.object(Registry, 'get')
+    patch.object(Registry, 'get', return_value='')
 
-    runner.invoke(
-        registry.get,
-        args=['-n', config_name]
-    )
+    with runner.runner.isolated_filesystem():
+        runner.run(
+            registry.get,
+            args=['-n', config_name]
+        )
     Registry.get.assert_called_with(config_name)
 
 
@@ -145,13 +150,14 @@ def test_registry_update(runner, patch, config_args):
     patch.object(registry, 'load_json', return_value=config_data)
     patch.object(Registry, 'update')
 
-    runner.invoke(
-        registry.update,
-        args=[
-            '-n', config_name,
-            *config_args
-        ]
-    )
+    with runner.runner.isolated_filesystem():
+        runner.run(
+            registry.update,
+            args=[
+                '-n', config_name,
+                *config_args
+            ]
+        )
 
     if config_args[0] == '-i':
         registry.get_config_interactive.assert_called_with()
@@ -167,11 +173,12 @@ def test_registry_delete(runner, patch):
 
     patch.object(Registry, 'delete')
 
-    runner.invoke(
-        registry.delete,
-        args=[
-            '-n', config_name
-        ]
-    )
+    with runner.runner.isolated_filesystem():
+        runner.run(
+            registry.delete,
+            args=[
+                '-n', config_name
+            ]
+        )
 
     Registry.delete.assert_called_with(config_name)

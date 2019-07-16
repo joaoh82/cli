@@ -12,6 +12,6 @@ __all__ = [
     'test',
     'update',
     'deploy',
-    'logout'
+    'logout',
     'registry',
 ]
