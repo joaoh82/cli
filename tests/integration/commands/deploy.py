@@ -6,7 +6,9 @@ from pytest import mark
 
 @mark.parametrize('with_message', [True, False])
 @mark.parametrize('hard_deployment', [True, False])
-@mark.parametrize('final_release_state', ['DEPLOYED', 'FAILED', 'UNKNOWN'])
+@mark.parametrize('final_release_state', [
+    'DEPLOYED', 'FAILED', 'UNKNOWN', 'TEMP_DEPLOYMENT_FAILURE'
+])
 @mark.parametrize('maintenance', [True, False])
 @mark.parametrize('payload', [None, 'my_super_complex_payload'])
 def test_deploy(runner, with_message, patch, hard_deployment,
@@ -68,6 +70,9 @@ def test_deploy(runner, with_message, patch, hard_deployment,
         elif final_release_state == 'FAILED':
             assert 'Deployment failed!' in result.stdout
             assert 'story logs' in result.stdout
+        elif final_release_state == 'TEMP_DEPLOYMENT_FAILURE':
+            assert 'Deployment failed!' in result.stdout
+            assert 'status.storyscript.io' in result.stdout
         else:
             assert f'An unhandled state of your app has been encountered ' \
                    f'- {final_release_state}' in result.stdout

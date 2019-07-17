@@ -81,6 +81,17 @@ def deploy(app, message, hard):
             err=True,
         )
         cli.print_command('story logs')
+    elif state == 'TEMP_DEPLOYMENT_FAILURE':
+        click.echo(
+            click.style('X', fg='red') + ' Deployment failed!', err=True
+        )
+        click.echo(
+            'An internal error occurred.\n'
+            'The Storyscript team has been notified.\n'
+            'Please visit https://status.storyscript.io/ '
+            'for incident reports and updates.',
+            err=True,
+        )
     else:
         click.echo(
             f'An unhandled state of your app has been encountered - {state}',
