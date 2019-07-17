@@ -17,21 +17,28 @@ from .. import cli
 DOCKER_HUB_REGISTRY_URL = 'https://index.docker.io/v1/'
 
 
-def load_json(path):
+def load_json_file(path, kill=True):
+    exception = False
     try:
         with open(os.path.expanduser(path)) as f:
-            config = json.load(f)
+            data = json.load(f)
     except (FileNotFoundError, IsADirectoryError):
         click.echo(click.style(
             f'The file {path} does not exist',
             fg='red'), err=True)
-        sys.exit(1)
+        exception = True
     except json.decoder.JSONDecodeError:
         click.echo(click.style(
             f'The file {path} is not valid JSON',
             fg='red'), err=True)
-        sys.exit(1)
-    return config
+        exception = True
+    finally:
+        if exception:
+            if kill:
+                sys.exit(1)
+            else:
+                return None
+    return data
 
 
 def generate_config(registry_url, username, password):
@@ -58,9 +65,13 @@ def generate_gcr_config():
     hostname = click.prompt('Hostname', type=click.Choice([
         'gcr.io', 'us.gcr.io', 'eu.gcr.io', 'asia.gcr.io'
     ]))
-    password = click.prompt('Service Account JSON key file (on a single line)',
-                            type=str)
-    return generate_config(f'https://{hostname}', '_json_key', password)
+    json_key = None
+    while json_key is None:
+        json_key_path = click.prompt('Path to service Account JSON key file',
+                                     type=str)
+        json_key = load_json_file(json_key_path, kill=False)
+
+    return generate_config(f'https://{hostname}', '_json_key', json_key)
 
 
 def get_config_interactive():
@@ -118,26 +129,19 @@ def get(name):
     required=True
 )
 @click.option(
-    '-i', '--interactive', type=bool, is_flag=True, default=False,
-    help='Generate registry config using the story CLI'
-)
-@click.option(
-    '-f', '--file', type=str, help='Path of the registry config json file'
+    '-f', '--file', type=str, help='Path of the registry config json file',
+    hidden=True
 )
 @click.option(
     '--team', type=str, help='Team name that owns this new registry config'
 )
-def create(name, interactive, file, team):
+def create(name, file, team):
     """Create a new registry config"""
 
     if file:
-        config = load_json(file)
-    elif interactive:
-        config = get_config_interactive()
+        config = load_json_file(file)
     else:
-        click.echo('Error: Either -i / --interactive or '
-                   '-f / --file must be specified')
-        sys.exit(1)
+        config = get_config_interactive()
 
     with spinner():
         api.Registry.create(name, config)
@@ -152,23 +156,16 @@ def create(name, interactive, file, team):
     required=True
 )
 @click.option(
-    '-i', '--interactive', type=bool, is_flag=True, default=False,
-    help='Generate registry config using the story CLI'
+    '-f', '--file', type=str, help='Path of the registry config json file',
+    hidden=True
 )
-@click.option(
-    '-f', '--file', type=str, help='Path of the registry config json file'
-)
-def update(name, interactive, file):
+def update(name, file):
     """Update a registry config"""
 
     if file:
-        config = load_json(file)
-    elif interactive:
-        config = get_config_interactive()
+        config = load_json_file(file)
     else:
-        click.echo('Error: Either -i / --interactive or '
-                   '-f / --file must be specified')
-        sys.exit(1)
+        config = get_config_interactive()
 
     with spinner():
         api.Registry.update(name, config)

@@ -40,10 +40,7 @@ def test_registry_create_dockerlogin(runner, patch, config_data):
     with runner.runner.isolated_filesystem():
         runner.run(
             registry.create,
-            args=[
-                '-n', config_name,
-                '-i'
-            ],
+            args=['-n', config_name],
             stdin='\n'.join(config_data.values()))
 
     config = registry.generate_config(
@@ -58,28 +55,27 @@ def test_registry_create_dockerlogin(runner, patch, config_data):
 @mark.parametrize('config_data', [{
     'type': 'gcr',
     'hostname': 'gcr.io',
-    'service_account_json_key': '{"type": "service_account", ...}'
+    'service_account_json_key_path': 'conf_file_path'
 }])
 def test_registry_create_gcr(runner, patch, config_data):
 
     config_name = 'my_config'
 
     patch.object(Registry, 'create')
+    patch.object(registry, 'load_json_file',
+                 return_value='contents_of_conf_file_path')
 
     with runner.runner.isolated_filesystem():
         runner.run(
             registry.create,
-            args=[
-                '-n', config_name,
-                '-i'
-            ],
+            args=['-n', config_name],
             stdin='\n'.join(config_data.values())
         )
 
     config = registry.generate_config(
         registry_url=f'https://{config_data["hostname"]}',
         username='_json_key',
-        password=config_data['service_account_json_key']
+        password='contents_of_conf_file_path'
     )
 
     Registry.create.assert_called_with(config_name, config)
@@ -100,7 +96,9 @@ def test_registry_create_file(runner, patch, config_json):
     with open(config_path, 'w') as f:
         json.dump(config_json, f)
 
-    patch.object(registry, 'load_json', side_effect=registry.load_json)
+    # To be able to assert_called_with later
+    patch.object(registry, 'load_json_file',
+                 side_effect=registry.load_json_file)
     patch.object(Registry, 'create')
 
     with runner.runner.isolated_filesystem():
@@ -112,7 +110,7 @@ def test_registry_create_file(runner, patch, config_json):
             ]
         )
 
-    registry.load_json.assert_called_with(config_path)
+    registry.load_json_file.assert_called_with(config_path)
     Registry.create.assert_called_with(config_name, config_json)
 
 
@@ -137,17 +135,17 @@ def test_registry_get(patch, runner):
     Registry.get.assert_called_with(config_name)
 
 
-@mark.parametrize('config_args', [
-    ['-i'],
-    ['-f', '/tmp/config.json']
+@mark.parametrize('file_args', [
+    ['-f', '/tmp/config.json'],
+    []
 ])
-def test_registry_update(runner, patch, config_args):
+def test_registry_update(runner, patch, file_args):
 
     config_name = 'my_config'
     config_data = {'auths': {'url': {'auth': 'username:password'}}}
 
     patch.object(registry, 'get_config_interactive', return_value=config_data)
-    patch.object(registry, 'load_json', return_value=config_data)
+    patch.object(registry, 'load_json_file', return_value=config_data)
     patch.object(Registry, 'update')
 
     with runner.runner.isolated_filesystem():
@@ -155,14 +153,14 @@ def test_registry_update(runner, patch, config_args):
             registry.update,
             args=[
                 '-n', config_name,
-                *config_args
+                *file_args
             ]
         )
 
-    if config_args[0] == '-i':
+    if file_args:
+        registry.load_json_file.assert_called_with('/tmp/config.json')
+    else:
         registry.get_config_interactive.assert_called_with()
-    elif config_args[0] == '-f':
-        registry.load_json.assert_called_with('/tmp/config.json')
 
     Registry.update.assert_called_with(config_name, config_data)
 
@@ -176,9 +174,7 @@ def test_registry_delete(runner, patch):
     with runner.runner.isolated_filesystem():
         runner.run(
             registry.delete,
-            args=[
-                '-n', config_name
-            ]
+            args=['-n', config_name]
         )
 
     Registry.delete.assert_called_with(config_name)
