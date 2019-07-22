@@ -13,6 +13,7 @@ from .. import awesome
 from .. import cli
 from .. import options
 from ..helpers import datetime
+from . import aliases
 
 
 def maintenance(enabled: bool) -> str:
@@ -26,7 +27,6 @@ def maintenance(enabled: bool) -> str:
 def apps():
     """Create, list, and manage apps on Storyscript Cloud."""
     pass
-
 
 @apps.command(name='list')
 def list_command():
@@ -64,7 +64,6 @@ def list_command():
     else:
         click.echo(table.draw())
 
-
 @apps.command()
 @click.argument('name', nargs=1, required=False)
 @click.option(
@@ -72,86 +71,7 @@ def list_command():
 )
 def create(name, team):
     """Create a new app."""
-
-    cli.user()
-    story_yaml = cli.find_story_yml()
-
-    if story_yaml is not None:
-        click.echo(
-            click.style(
-                'There appears to be an Storyscript Cloud project in '
-                f'{story_yaml} already.\n',
-                fg='red',
-            )
-        )
-        click.echo(
-            click.style(
-                'Are you trying to deploy? ' 'Try the following:', fg='red'
-            )
-        )
-        click.echo(click.style('$ story deploy', fg='magenta'))
-        sys.exit(1)
-
-    # _is_git_repo_good()
-
-    name = name or awesome.new()
-
-    # Sanity check.
-    if len(name) < 4:
-        click.echo(
-            click.style(
-                'The name you specified is too short. \n'
-                'Please use at least 4 characters in your app name.',
-                fg='red',
-            )
-        )
-        sys.exit(1)
-
-    click.echo('Creating application… ', nl=False)
-
-    with spinner():
-        api.Apps.create(name=name, team=team)
-
-    click.echo(
-        '\b' + click.style(emoji.emojize(':heavy_check_mark:'), fg='green')
-    )
-
-    # click.echo('Adding git-remote... ', nl=False)
-    # cli.run(f'git remote add asyncy https://git.asyncy.com/{name}')
-    # click.echo(click.style(emoji.emojize(':heavy_check_mark:'), fg='green'))
-
-    click.echo('Creating story.yml… ', nl=False)
-    cli.settings_set(f'app_name: {name}\n', 'story.yml')
-
-    click.echo(
-        '\b' + click.style(emoji.emojize(':heavy_check_mark:'), fg='green')
-    )
-
-    click.echo('\nApp Name: ' + click.style(name, bold=True))
-    click.echo(
-        'App URL: '
-        + click.style(f'https://{name}.storyscriptapp.com/', fg='blue')
-        + '\n'
-    )
-
-    click.echo(
-        'You are now ready to write your first Storyscript! '
-        f'{emoji.emojize(":party_popper:")}'
-    )
-    click.echo()
-
-    cli.track('App Created', {'App name': name})
-
-    click.echo(' - [ ] Write a Story:')
-    click.echo(
-        '       $ '
-        + click.style('story write http > http.story', fg='magenta')
-    )
-    click.echo()
-    click.echo(' - [ ] Deploy to Storyscript Cloud:')
-    click.echo('       $ ' + click.style('story deploy', fg='magenta'))
-    click.echo()
-    click.echo('We hope you enjoy your deployment experience!')
+    aliases.create_helper(name, team)
 
 
 @apps.command()
